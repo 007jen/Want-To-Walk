@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operation: 10-Minute Campus Stroll</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Patrick Hand', cursive;
+            background-color: #fdfbf7;
+            /* Lined paper effect */
+            background-image: repeating-linear-gradient(transparent, transparent 31px, #e0e0e0 31px, #e0e0e0 32px);
+            background-attachment: local;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Sketchy border */
+        .sketch-border {
+            border: 3px solid #333;
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+            background: #fff;
+        }
+
+        .sketch-button {
+            border: 2px solid #333;
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+            transition: all 0.2s ease;
+        }
+        
+        .sketch-button:hover {
+            border-radius: 15px 255px 15px 225px/225px 15px 255px 15px;
+            transform: scale(1.05) rotate(-1deg);
+        }
+
+        .polaroid {
+            background: white;
+            padding: 10px 10px 30px 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transform: rotate(-2deg);
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+        
+        .polaroid:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+
+        .tape {
+            background-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            position: absolute;
+            width: 100px;
+            height: 30px;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            z-index: 10;
+        }
+
+        .doodle {
+            position: fixed;
+            z-index: -1;
+            opacity: 0.3;
+            animation: float 6s ease-in-out infinite;
+            filter: grayscale(0.2);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .doraemon-blue { color: #54b2e8; }
+        .bg-doraemon-blue { background-color: #54b2e8; }
+        .doraemon-yellow { color: #ffd152; }
+        .bg-doraemon-yellow { background-color: #ffd152; }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #54b2e8;
+            cursor: pointer;
+            border: 2px solid #333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal.active { 
+            display: flex; 
+            opacity: 1;
+            animation: popIn 0.3s ease-out forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .radio-custom input[type="radio"] {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #333;
+            border-radius: 50%;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .radio-custom input[type="radio"]:checked::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #54b2e8;
+        }
+
+        .checkbox-custom input[type="checkbox"] {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .checkbox-custom input[type="checkbox"]:checked::before {
+            content: '✔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #54b2e8;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <!-- Floating Doodles -->
+    <div class="doodle text-5xl md:text-6xl" style="top: 10%; left: 5%;">🚁</div>
+    <div class="doodle text-5xl md:text-6xl" style="top: 20%; right: 10%; animation-delay: 1s;">🥞</div>
+    <div class="doodle text-5xl md:text-6xl" style="top: 60%; left: 10%; animation-delay: 2s;">🚪</div>
+    <div class="doodle text-5xl md:text-6xl" style="top: 80%; right: 5%; animation-delay: 3s;">⭐</div>
+
+    <div class="max-w-2xl w-full bg-white/90 backdrop-blur-sm sketch-border p-6 md:p-10 mb-10 relative mt-8 z-10 shadow-xl">
+        
+        <h1 class="text-4xl md:text-5xl font-bold text-center mb-8 doraemon-blue drop-shadow-sm leading-tight">
+            Operation: 10-Minute Campus Stroll 🚶💨
+        </h1>
+
+        <!-- Video Section -->
+        <div class="polaroid mx-auto mb-12 max-w-md sketch-border bg-white cursor-pointer group">
+            <div class="tape backdrop-blur-md bg-yellow-100/50"></div>
+            <!-- Video Container -->
+            <div class="relative w-full aspect-video bg-gray-100 rounded sketch-border overflow-hidden group">
+                <!-- Fallback background image if video isn't linked properly -->
+                <video id="doraemon-video" class="w-full h-full object-cover" loop muted playsinline>
+                    <source src="Want To Walk.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                
+                <!-- Play/Unmute Button styled as Doraemon Bell -->
+                <button id="video-control" class="absolute inset-0 m-auto w-16 h-16 bg-[#ffd152] rounded-full border-4 border-gray-800 flex flex-col items-center justify-center sketch-button opacity-90 group-hover:opacity-100 shadow-lg transition-opacity z-10">
+                    <div class="w-10 h-1.5 bg-gray-800 rounded-full mb-1"></div>
+                    <div class="w-10 h-1.5 bg-gray-800 rounded-full mb-2"></div>
+                    <div class="w-3 h-3 bg-gray-800 rounded-full"></div>
+                    <div class="w-1 h-5 bg-gray-800"></div>
+                </button>
+            </div>
+            <p class="text-center mt-3 text-xl text-gray-700 font-bold">Doremon vibes 🏃‍♀️🏃‍♂️</p>
+        </div>
+
+        <div class="space-y-10">
+            <!-- Customize Your Walk -->
+            <div class="bg-blue-50/50 p-6 sketch-border">
+                <h2 class="text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-400 inline-block pb-1">1. Customize Your Walk</h2>
+                
+                <div class="mb-8">
+                    <label class="block text-2xl mb-3">Pace Selector: <span id="pace-label" class="font-bold doraemon-blue">Shizuka Breeze</span></label>
+                    <input type="range" min="1" max="3" value="3" id="pace-slider" class="mb-3">
+                    <p id="pace-desc" class="text-gray-600 text-lg bg-white p-2 sketch-border inline-block">Casual 10-minute loop, no sweating allowed.</p>
+                </div>
+
+                <div class="mb-8 radio-custom">
+                    <label class="block text-2xl mb-4">Distance / Goal:</label>
+                    <div class="flex flex-col gap-3">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="radio" name="distance" checked>
+                            <span class="text-xl group-hover:text-[#54b2e8] transition-colors">Just around the block</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="radio" name="distance">
+                            <span class="text-xl group-hover:text-[#54b2e8] transition-colors">Walk to get iced tea / snack 🧋</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="radio" name="distance">
+                            <span class="text-xl group-hover:text-[#54b2e8] transition-colors">Literally sit under a tree and talk 🌳</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-2 checkbox-custom">
+                    <!-- <label class="flex items-center gap-4 cursor-pointer group p-4 bg-yellow-50 sketch-border hover:bg-yellow-100 transition-colors shadow-sm">
+                        <input type="checkbox" id="wingwoman">
+                        <span class="text-xl leading-tight">Bring [Roommate's Name] along <br><span class="text-base text-gray-500">(Mandatory bodyguard duty)</span></span>
+                    </label> -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="bg-white p-6 sketch-border text-center">
+                <h2 class="text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-400 inline-block pb-1">2. The Verdict?</h2>
+                
+                <div class="flex flex-col gap-4 max-w-md mx-auto">
+                    <button id="btn-deal" class="sketch-button bg-[#54b2e8] text-white py-4 px-6 text-2xl font-bold shadow-md hover:bg-blue-400 active:scale-95">
+                        Deal! Let's Walk ✨
+                    </button>
+                    
+                    <button id="btn-jelly" class="sketch-button bg-gray-100 text-gray-800 py-3 px-6 text-xl font-bold shadow-sm hover:bg-gray-200 active:scale-95">
+                        Legs feel like jelly today 😴
+                    </button>
+
+                    <button id="btn-sit" class="sketch-button bg-[#ffd152] text-gray-800 py-3 px-6 text-xl font-bold shadow-sm hover:bg-yellow-300 active:scale-95">
+                        Only if we walk 0 steps & just sit 🪑
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Deal Modal -->
+    <div id="modal-deal" class="modal">
+        <div class="sketch-border p-8 max-w-sm w-full relative bg-[#fdfbf7] mx-4 text-center shadow-2xl">
+            <button class="absolute top-2 right-4 text-3xl close-modal hover:text-red-500 transition-colors">&times;</button>
+            <h3 class="text-3xl mb-4 font-bold doraemon-blue">Receipt of Agreement 🧾</h3>
+            <div class="bg-white p-4 sketch-border mb-6">
+                <ul class="text-left text-xl space-y-2">
+                    <li>✅ Pace locked.</li>
+                    <li>✅ Snacks promised.</li>
+                    <li>✅ Zero uphill walking.</li>
+                </ul>
+            </div>
+            <a href="https://wa.me/?text=I%20accept%20the%20Operation%3A%2010-Minute%20Campus%20Stroll!%20%F0%9F%9A%B6%E2%80%8D%E2%99%82%EF%B8%8F%F0%9F%92%A8" target="_blank" class="sketch-button inline-block bg-[#25D366] text-white py-3 px-6 text-xl font-bold hover:bg-green-500 w-full">
+                Share Confirmation 📱
+            </a>
+        </div>
+    </div>
+
+    <!-- Jelly Modal -->
+    <div id="modal-jelly" class="modal">
+        <div class="sketch-border p-8 max-w-sm w-full relative bg-[#fdfbf7] mx-4 text-center shadow-2xl">
+            <button class="absolute top-2 right-4 text-3xl close-modal hover:text-red-500 transition-colors">&times;</button>
+            <div class="text-6xl mb-4 animate-bounce">🚪</div>
+            <h3 class="text-3xl mb-2 font-bold text-gray-800">Recharge mode ON</h3>
+            <p class="text-xl text-gray-600">Valid! We shall conserve battery today. Anywherer Door to the rescue.</p>
+        </div>
+    </div>
+
+    <!-- Sit Modal -->
+    <div id="modal-sit" class="modal">
+        <div class="sketch-border p-8 max-w-sm w-full relative bg-[#fdfbf7] mx-4 text-center shadow-2xl">
+            <button class="absolute top-2 right-4 text-3xl close-modal hover:text-red-500 transition-colors">&times;</button>
+            <div class="text-6xl mb-4">🌳🧋</div>
+            <h3 class="text-3xl mb-2 font-bold doraemon-yellow">Bench Hangout Confirmed!</h3>
+            <p class="text-xl text-gray-600">0 steps required. Just pure vibes.</p>
+        </div>
+    </div>
+
+    <script>
+        // Video Controls
+        const video = document.getElementById('doraemon-video');
+        const videoControl = document.getElementById('video-control');
+
+        videoControl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (video.paused) {
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        video.muted = false;
+                        videoControl.classList.add('opacity-0');
+                    }).catch(err => {
+                        console.warn("Video playback was interrupted or video file is missing.", err);
+                    });
+                }
+            } else {
+                video.pause();
+                videoControl.classList.remove('opacity-0');
+            }
+        });
+
+        video.addEventListener('click', () => {
+            if (!video.paused) {
+                video.pause();
+                videoControl.classList.remove('opacity-0');
+            }
+        });
+
+        // Pace Slider Logic
+        const paceSlider = document.getElementById('pace-slider');
+        const paceLabel = document.getElementById('pace-label');
+        const paceDesc = document.getElementById('pace-desc');
+
+        const paces = {
+            1: { name: "Grandpa Snail (0.5 km/h)", desc: "Guaranteed breaks every 20 paces." },
+            2: { name: "Nobita Crawl", desc: "Bench-to-bench migration." },
+            3: { name: "Shizuka Breeze", desc: "Casual 10-minute loop, no sweating allowed." }
+        };
+
+        paceSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            paceLabel.textContent = paces[val].name;
+            paceDesc.textContent = paces[val].desc;
+        });
+
+        // Modals
+        const closeModals = () => document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+        document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', closeModals));
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModals();
+            }
+        }
+
+        // Deal Button
+        document.getElementById('btn-deal').addEventListener('click', () => {
+            confetti({
+                particleCount: 150,
+                spread: 80,
+                origin: { y: 0.6 },
+                colors: ['#54b2e8', '#ffd152', '#ffffff', '#333333'],
+                shapes: ['star', 'circle']
+            });
+            document.getElementById('modal-deal').classList.add('active');
+        });
+
+        // Jelly Button
+        document.getElementById('btn-jelly').addEventListener('click', () => {
+            document.getElementById('modal-jelly').classList.add('active');
+        });
+
+        // Sit Button
+        document.getElementById('btn-sit').addEventListener('click', () => {
+            document.getElementById('modal-sit').classList.add('active');
+        });
+    </script>
+</body>
+</html>
